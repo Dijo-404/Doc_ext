@@ -1,0 +1,110 @@
+{
+    "name": "Marksheet Extractor",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "upload-marksheet",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "a1b2c3d4",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                220,
+                300
+            ],
+            "webhookId": "marksheet-webhook-id"
+        },
+        {
+            "parameters": {
+                "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=YOUR_GEMINI_API_KEY",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [\n      {\n        \"text\": \"Extract all student information from this marksheet. Return JSON: { \\\"students\\\": [ { \\\"name\\\": \\\"\\\", \\\"roll_no\\\": \\\"\\\", \\\"marks\\\": {} } ] }. Return ONLY JSON.\"\n      },\n      {\n        \"inline_data\": {\n          \"mime_type\": \"{{ $binary.data.mimeType }}\",\n          \"data\": \"{{ $binary.data.data }}\"\n        }\n      }\n    ]\n  }]\n}",
+                "options": {}
+            },
+            "id": "e5f6g7h8",
+            "name": "Gemini API",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                440,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "try {\n  const text = $input.item.json.candidates[0].content.parts[0].text;\n  let clean = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  return { json: JSON.parse(clean) };\n} catch (e) {\n  return { json: { error: e.message, raw: $input.item.json } };\n}"
+            },
+            "id": "i9j0k1l2",
+            "name": "Parse Response",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                660,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}"
+            },
+            "id": "m3n4o5p6",
+            "name": "Respond",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                880,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Gemini API",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini API": {
+            "main": [
+                [
+                    {
+                        "node": "Parse Response",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Parse Response": {
+            "main": [
+                [
+                    {
+                        "node": "Respond",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

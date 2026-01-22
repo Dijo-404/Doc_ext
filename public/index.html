@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marksheet Extractor | AI-Powered Data Extraction</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📄</div>
+                <div class="logo-text">
+                    <h1>Marksheet Extractor</h1>
+                    <p>AI-Powered Data Extraction</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <h2>Upload Marksheet</h2>
+                        <p>Drag & drop your marksheet image or click to browse</p>
+                        <p class="file-types">Supports: JPG, PNG, WebP, PDF (Max 10MB)</p>
+                        <input type="file" id="fileInput" accept="image/*,.pdf" hidden>
+                        <button class="btn btn-primary" id="browseBtn">
+                            <span>Choose File</span>
+                        </button>
+                    </div>
+
+                    <!-- File Preview -->
+                    <div class="file-preview" id="filePreview" style="display: none;">
+                        <img src="" alt="Preview" id="previewImage">
+                        <div class="file-info">
+                            <span class="file-name" id="fileName"></span>
+                            <button class="btn-remove" id="removeFile">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Extract Button -->
+                    <button class="btn btn-extract" id="extractBtn" disabled>
+                        <span class="btn-text">Extract Data</span>
+                        <span class="btn-loader" style="display: none;">
+                            <div class="spinner"></div>
+                            Processing...
+                        </span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>📊 Extracted Data</h2>
+                    <div class="results-actions">
+                        <button class="btn btn-secondary" id="copyBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            Copy JSON
+                        </button>
+                        <button class="btn btn-secondary" id="downloadBtn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                            Download
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Student Cards -->
+                <div class="students-grid" id="studentsGrid"></div>
+
+                <!-- Raw JSON -->
+                <details class="json-details">
+                    <summary>View Raw JSON</summary>
+                    <pre class="json-output" id="jsonOutput"></pre>
+                </details>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by Gemini AI & n8n</p>
+        </footer>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

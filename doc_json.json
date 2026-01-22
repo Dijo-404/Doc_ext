@@ -1,0 +1,163 @@
+{
+  "name": "Marksheet Data Extraction with Gemini",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "upload-marksheet",
+        "options": {}
+      },
+      "id": "webhook_node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "marksheet-upload"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "id": "extract_file",
+      "name": "Extract from File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "mode": "jsonToBinary",
+        "options": {
+          "mimeType": "={{ $json.mimeType }}",
+          "fileName": "={{ $json.fileName }}"
+        }
+      },
+      "id": "convert_binary",
+      "name": "Convert to Binary",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1,
+      "position": [450, 450]
+    },
+    {
+      "parameters": {
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "YOUR_GEMINI_API_KEY"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [{\n    \"parts\": [\n      {\n        \"text\": \"Extract all student information from this marksheet document (PDF or image). Return the data in valid JSON format with the following structure: { \\\"students\\\": [ { \\\"name\\\": \\\"\\\", \\\"roll_no\\\": \\\"\\\", \\\"id\\\": \\\"\\\", \\\"marks\\\": {} } ] }. For marks, use subject names as keys and marks as values. Include all students found in the document. Return ONLY the JSON, no other text or explanation.\"\n      },\n      {\n        \"inline_data\": {\n          \"mime_type\": \"{{ $json.mimeType || 'application/pdf' }}\",\n          \"data\": \"{{ $binary.data.data }}\"\n        }\n      }\n    ]\n  }]\n}",
+        "options": {}
+      },
+      "id": "gemini_api",
+      "name": "Gemini API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst text = response.candidates[0].content.parts[0].text;\n\n// Remove markdown code blocks if present\nlet cleanText = text.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n\ntry {\n  // Parse the JSON\n  const extractedData = JSON.parse(cleanText);\n  return { json: extractedData };\n} catch (error) {\n  // If parsing fails, return raw text\n  return { \n    json: { \n      error: 'Failed to parse JSON', \n      raw_response: cleanText \n    } \n  };\n}"
+      },
+      "id": "parse_json",
+      "name": "Parse JSON Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to Binary": {
+      "main": [
+        [
+          {
+            "node": "Gemini API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini API": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {}
+}
